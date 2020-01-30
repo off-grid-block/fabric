@@ -316,7 +316,6 @@ func CreateChaincodeProposalWithTxIDNonceAndTransient(txid string, typ common.He
 			&common.SignatureHeader{
 				Nonce:   nonce,
 				Creator: creator,
-				Did:	[]byte("testdid"),
 			},
 		),
 	}
