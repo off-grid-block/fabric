@@ -130,6 +130,8 @@ message SignatureHeader {
 
     // Arbitrary number that may only be used once. Can be used to detect replay attacks.
     bytes nonce = 2;
+
+    //Did for indy verification
 	bytes did = 3;
 }
 

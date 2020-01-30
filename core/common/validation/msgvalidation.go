@@ -19,6 +19,8 @@ package validation
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -101,19 +103,42 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	fmt.Println("signature header ", shdr)
 
 	// validate the signature
-	err = checkSignatureFromCreator(shdr.Creator, signedProp.Signature, signedProp.ProposalBytes, chdr.ChannelId)
-	if err != nil {
-		// log the exact message on the peer but return a generic error message to
-		// avoid malicious users scanning for channels
-		putilsLogger.Warningf("channel [%s]: %s", chdr.ChannelId, err)
-		sId := &msp.SerializedIdentity{}
-		err := proto.Unmarshal(shdr.Creator, sId)
+	if shdr.Did == nil {
+		err = checkSignatureFromCreator(shdr.Creator, signedProp.Signature, signedProp.ProposalBytes, chdr.ChannelId)
 		if err != nil {
-			// log the error here as well but still only return the generic error
-			err = errors.Wrap(err, "could not deserialize a SerializedIdentity")
+			// log the exact message on the peer but return a generic error message to
+			// avoid malicious users scanning for channels
 			putilsLogger.Warningf("channel [%s]: %s", chdr.ChannelId, err)
+			sId := &msp.SerializedIdentity{}
+			err := proto.Unmarshal(shdr.Creator, sId)
+			if err != nil {
+				// log the error here as well but still only return the generic error
+				err = errors.Wrap(err, "could not deserialize a SerializedIdentity")
+				putilsLogger.Warningf("channel [%s]: %s", chdr.ChannelId, err)
+			}
+			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
-		return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
+	} else {
+		url := "http://10.53.17.40:8008/verify_signature"
+
+		payload := []byte(`{
+			"message" : "test",
+			"their_did" : "4r2tt4btef2SansVR1nYXo",
+			"signature": "wovDlMOFDMO1NFLFvkXDtFjCnsOZw5AqxaBPxaDCqsOIwoEdwp7CnknDqUbCqsKLw487OsO3UWwJQDx8w71VwrE6w4ZKUsKrwpDDs8K6P314d8OawrYpO1TCg8O+B8W4CQ=="
+			}`) //sig contains some strange chars
+		//		payload := []byte("{\"message\" : \""+hash+"\",\"their_did\" : \""+shdr.Did+"\",\"signature\": \""+signedProp.Signature+"\"}")
+
+		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+
+		req.Header.Add("content-type", "text/plain")
+
+		res, _ := http.DefaultClient.Do(req)
+
+		defer res.Body.Close()
+		body, _ := ioutil.ReadAll(res.Body)
+
+		fmt.Println(string(body))
+
 	}
 
 	// Verify that the transaction ID has been computed properly.
