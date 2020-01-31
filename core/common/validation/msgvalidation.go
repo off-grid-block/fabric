@@ -125,13 +125,15 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 
 		hash := sha256.Sum256(signedProp.ProposalBytes)
 		encoded := b64.StdEncoding.EncodeToString(hash[:])
+		fmt.Println()
+		fmt.Println()
 		fmt.Println("calculated hash", hash)
 		fmt.Println("encoded hash", encoded)
 
-		url := "http://10.53.17.40:8008/verify_signature"
+		url := "http://10.53.17.40:8003/verify_signature"
 
 		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
-
+		fmt.Println("prepared payload", string(payload))
 		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 
 		req.Header.Add("content-type", "text/plain")
@@ -140,8 +142,11 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 
 		defer res.Body.Close()
 		body, _ := ioutil.ReadAll(res.Body)
-		fmt.Println("response received", encoded)
-		fmt.Println(string(body))
+		fmt.Println("response received", body)
+		fmt.Println("stringified response", string(body))
+		fmt.Println()
+		fmt.Println()
+		fmt.Println()
 
 	}
 
