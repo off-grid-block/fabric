@@ -103,7 +103,6 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fmt.Println("signature header ", shdr)
 
 	// validate the signature
 	if shdr.Did == nil {
