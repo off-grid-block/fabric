@@ -18,6 +18,9 @@ package validation
 
 import (
 	"bytes"
+	"crypto/sha256"
+	b64 "encoding/base64"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -119,14 +122,15 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
 	} else {
+
+		hash := sha256.Sum256(signedProp.ProposalBytes)
+		encoded := b64.StdEncoding.EncodeToString(hash[:])
+		fmt.Println("calculated hash", hash)
+		fmt.Println("encoded hash", encoded)
+
 		url := "http://10.53.17.40:8008/verify_signature"
 
-		payload := []byte(`{
-			"message" : "test",
-			"their_did" : "4r2tt4btef2SansVR1nYXo",
-			"signature": "wovDlMOFDMO1NFLFvkXDtFjCnsOZw5AqxaBPxaDCqsOIwoEdwp7CnknDqUbCqsKLw487OsO3UWwJQDx8w71VwrE6w4ZKUsKrwpDDs8K6P314d8OawrYpO1TCg8O+B8W4CQ=="
-			}`) //sig contains some strange chars
-		//		payload := []byte("{\"message\" : \""+hash+"\",\"their_did\" : \""+shdr.Did+"\",\"signature\": \""+signedProp.Signature+"\"}")
+		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
 
 		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 
@@ -136,7 +140,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 
 		defer res.Body.Close()
 		body, _ := ioutil.ReadAll(res.Body)
-
+		fmt.Println("response received", encoded)
 		fmt.Println(string(body))
 
 	}
