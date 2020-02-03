@@ -231,10 +231,10 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 		}
 		version = cdLedger.CCVersion()
 
-		err = e.s.CheckInstantiationPolicy(cid.Name, version, cdLedger)
+		/* err = e.s.CheckInstantiationPolicy(cid.Name, version, cdLedger)
 		if err != nil {
 			return nil, nil, nil, nil, err
-		}
+		} */
 	} else {
 		version = util.GetSysCCVersion()
 	}
