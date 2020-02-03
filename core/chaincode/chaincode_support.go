@@ -237,6 +237,9 @@ func (cs *ChaincodeSupport) ExecuteLegacyInit(txParams *ccprovider.TransactionPa
 // Execute invokes chaincode and returns the original response.
 func (cs *ChaincodeSupport) Execute(txParams *ccprovider.TransactionParams, cccid *ccprovider.CCContext, input *pb.ChaincodeInput) (*pb.Response, *pb.ChaincodeEvent, error) {
 	resp, err := cs.Invoke(txParams, cccid, input)
+	fmt.Println("inside chaincodesupport.go")
+	fmt.Println("resp is", resp)
+
 	return processChaincodeExecutionResult(txParams.TxID, cccid.Name, resp, err)
 }
 
@@ -286,6 +289,7 @@ func (cs *ChaincodeSupport) Invoke(txParams *ccprovider.TransactionParams, cccid
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("inside Invoke")
 
 	// TODO add Init exactly once semantics here once new lifecycle
 	// is available.  Enforced if the target channel is using the new lifecycle
