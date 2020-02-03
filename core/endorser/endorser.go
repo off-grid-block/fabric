@@ -232,6 +232,7 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 			return nil, nil, nil, nil, errors.WithMessage(err, fmt.Sprintf("make sure the chaincode %s has been successfully instantiated and try again", cid.Name))
 		}
 		version = cdLedger.CCVersion()
+		fmt.Println("tp10")
 
 		/* err = e.s.CheckInstantiationPolicy(cid.Name, version, cdLedger)
 		if err != nil {
@@ -252,8 +253,11 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 		endorserLogger.Errorf("[%s][%s] failed to invoke chaincode %s, error: %+v", txParams.ChannelID, shorttxid(txParams.TxID), cid, err)
 		return nil, nil, nil, nil, err
 	}
+	fmt.Println("tp4")
 
 	if txParams.TXSimulator != nil {
+		fmt.Println("tp5")
+
 		if simResult, err = txParams.TXSimulator.GetTxSimulationResults(); err != nil {
 			txParams.TXSimulator.Done()
 			return nil, nil, nil, nil, err
