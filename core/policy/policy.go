@@ -157,6 +157,7 @@ func (p *policyChecker) CheckPolicyNoChannel(policyName string, signedProp *pb.S
 // CheckPolicyBySignedData checks that the passed signed data is valid with the respect to
 // passed policy on the passed channel.
 func (p *policyChecker) CheckPolicyBySignedData(channelID, policyName string, sd []*common.SignedData) error {
+	fmt.Println("I was called")
 	if channelID == "" {
 		return errors.New("Invalid channel ID name during check policy on signed data. Name must be different from nil.")
 	}

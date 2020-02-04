@@ -70,7 +70,7 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 	if !ok {
 		return fmt.Errorf("could not find policy %s", policyName)
 	}
-
+	fmt.Println("I was called by orderer")
 	err = policy.Evaluate(signedData)
 	if err != nil {
 		logger.Debugf("SigFilter evaluation failed: %s, policyName: %s, ConsensusState: %s", err.Error(), policyName, ordererConf.ConsensusState())
