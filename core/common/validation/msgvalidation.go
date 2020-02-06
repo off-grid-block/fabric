@@ -18,8 +18,12 @@ package validation
 
 import (
 	"bytes"
+	"crypto/sha256"
+	b64 "encoding/base64"
 
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -117,28 +121,28 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
 	} else {
-		/*
-			hash := sha256.Sum256(signedProp.ProposalBytes)
-			encoded := b64.StdEncoding.EncodeToString(hash[:])
-			fmt.Println()
-			fmt.Println()
-			fmt.Println("calculated hash", hash)
-			fmt.Println("encoded hash", encoded)
 
-			url := "http://10.53.17.40:8003/verify_signature"
+		hash := sha256.Sum256(signedProp.ProposalBytes)
+		encoded := b64.StdEncoding.EncodeToString(hash[:])
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("calculated hash", hash)
+		fmt.Println("encoded hash", encoded)
 
-			payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
-			fmt.Println("prepared payload", string(payload))
-			req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+		url := "http://10.53.17.40:8003/verify_signature"
 
-			req.Header.Add("content-type", "text/plain")
+		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
+		fmt.Println("prepared payload", string(payload))
+		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 
-			res, _ := http.DefaultClient.Do(req)
+		req.Header.Add("content-type", "text/plain")
 
-			defer res.Body.Close()
-			body, _ := ioutil.ReadAll(res.Body)
-			fmt.Println("response received", body)
-			fmt.Println("stringified response", string(body))*/
+		res, _ := http.DefaultClient.Do(req)
+
+		defer res.Body.Close()
+		body, _ := ioutil.ReadAll(res.Body)
+		fmt.Println("response received", body)
+		fmt.Println("stringified response", string(body))
 		fmt.Println()
 		fmt.Println()
 		fmt.Println()

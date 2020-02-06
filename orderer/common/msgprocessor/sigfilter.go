@@ -7,7 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package msgprocessor
 
 import (
+	"bytes"
+	"crypto/sha256"
+	b64 "encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -65,28 +70,27 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 	}
 	if shdr.Did != nil {
 		fmt.Println("received indy signed proposal, verifying by indy")
-		/*
-			hash := sha256.Sum256(message.Payload)
-			encoded := b64.StdEncoding.EncodeToString(hash[:])
-			fmt.Println()
-			fmt.Println()
-			fmt.Println("calculated hash", hash)
-			fmt.Println("encoded hash", encoded)
+		hash := sha256.Sum256(message.Payload)
+		encoded := b64.StdEncoding.EncodeToString(hash[:])
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("calculated hash", hash)
+		fmt.Println("encoded hash", encoded)
 
-			url := "http://10.53.17.40:8003/verify_signature"
+		url := "http://10.53.17.40:8003/verify_signature"
 
-			payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(message.Signature) + "\"}")
-			fmt.Println("prepared payload", string(payload))
-			req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(message.Signature) + "\"}")
+		fmt.Println("prepared payload", string(payload))
+		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 
-			req.Header.Add("content-type", "text/plain")
+		req.Header.Add("content-type", "text/plain")
 
-			res, _ := http.DefaultClient.Do(req)
+		res, _ := http.DefaultClient.Do(req)
 
-			defer res.Body.Close()
-			body, _ := ioutil.ReadAll(res.Body)
-			fmt.Println("response received", body)
-			fmt.Println("stringified response", string(body))*/
+		defer res.Body.Close()
+		body, _ := ioutil.ReadAll(res.Body)
+		fmt.Println("response received", body)
+		fmt.Println("stringified response", string(body))
 		fmt.Println()
 		fmt.Println()
 		fmt.Println()
