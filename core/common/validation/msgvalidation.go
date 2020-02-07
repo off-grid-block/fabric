@@ -463,13 +463,14 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		fmt.Println()
 		//if err return nil, pb.TxValidationCode_BAD_COMMON_HEADER
 
-	}
+	} else {
 
-	//for fabric user
-	err = checkSignatureFromCreator(shdr.Creator, e.Signature, e.Payload, chdr.ChannelId)
-	if err != nil {
-		putilsLogger.Errorf("checkSignatureFromCreator returns err %s", err)
-		return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		//for fabric user
+		err = checkSignatureFromCreator(shdr.Creator, e.Signature, e.Payload, chdr.ChannelId)
+		if err != nil {
+			putilsLogger.Errorf("checkSignatureFromCreator returns err %s", err)
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
 	}
 
 	// TODO: ensure that creator can transact with us (some ACLs?) which set of APIs is supposed to give us this info?
