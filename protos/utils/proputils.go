@@ -596,7 +596,7 @@ func CheckTxID(txid string, nonce, creator []byte) error {
 	}
 
 	if txid != computedTxID {
-		return errors.Errorf("invalid txid. got [%s], expected [%s]", txid, computedTxID)
+		return errors.Errorf("from fabric: invalid txid. got [%s], expected [%s]", txid, computedTxID)
 	}
 
 	return nil
