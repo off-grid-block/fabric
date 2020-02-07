@@ -434,7 +434,9 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 	// validate the signature in the envelope
 	//for indy user
 	if shdr.Did != nil {
-		fmt.Println("didi is not nill at verifier")
+		fmt.Println("didi is not nill at verifier", shdr.Did)
+		fmt.Println("sig is", string(e.Signature))
+
 		hash := sha256.Sum256(e.Payload)
 		encoded := b64.StdEncoding.EncodeToString(hash[:])
 		fmt.Println()
