@@ -432,6 +432,39 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 	}
 
 	// validate the signature in the envelope
+	//for indy user
+	if shdr.Did != nil {
+		fmt.Println("didi is not nill at verifier")
+		hash := sha256.Sum256(e.Payload)
+		encoded := b64.StdEncoding.EncodeToString(hash[:])
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("calculated hash", hash)
+		fmt.Println("encoded hash", encoded)
+
+		url := "http://10.53.17.40:8003/verify_signature"
+
+		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(e.Signature) + "\"}")
+		fmt.Println("prepared payload", string(payload))
+		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+
+		req.Header.Add("content-type", "text/plain")
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			// we need to complete this also
+		}
+		defer res.Body.Close()
+		body, _ := ioutil.ReadAll(res.Body)
+		fmt.Println("response received", body)
+		fmt.Println("stringified response", string(body))
+		fmt.Println()
+		//if err return nil, pb.TxValidationCode_BAD_COMMON_HEADER
+
+	}
+
+	//for fabric user
+	fmt.Println("response received", body)
 	err = checkSignatureFromCreator(shdr.Creator, e.Signature, e.Payload, chdr.ChannelId)
 	if err != nil {
 		putilsLogger.Errorf("checkSignatureFromCreator returns err %s", err)
