@@ -244,7 +244,7 @@ func validateSignatureHeader(sHdr *common.SignatureHeader) error {
 	// ensure that there is a creator
 	if sHdr.Creator == nil || len(sHdr.Creator) == 0 {
 		if sHdr.Did == nil || len(sHdr.Did) == 0 {
-			return errors.New("invalid creator specified in the header" + string(sHdr.Did) + string(sHdr.Creator))
+			return errors.New("invalid creator specified in the header" + string(sHdr.Did) + string(sHdr.Creator) + "done")
 		}
 	}
 
