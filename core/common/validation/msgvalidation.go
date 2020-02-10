@@ -230,6 +230,7 @@ func checkSignatureFromCreator(creatorBytes []byte, sig []byte, msg []byte, Chai
 
 // checks for a valid SignatureHeader
 func validateSignatureHeader(sHdr *common.SignatureHeader) error {
+	fmt.Println("shdr is:", sHdr)
 	// check for nil argument
 	if sHdr == nil {
 		return errors.New("nil SignatureHeader provided")
