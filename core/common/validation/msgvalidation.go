@@ -157,7 +157,10 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 		shdr.Nonce,
 		shdr.Creator)
 	if err != nil {
+		fmt.Println("txid didn't match")
 		return nil, nil, nil, err
+	} else {
+		fmt.Println("txid matches")
 	}
 
 	// continue the validation in a way that depends on the type specified in the header

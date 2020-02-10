@@ -451,6 +451,7 @@ func (v *TxValidator) validateTx(req *blockValidationRequest, results chan<- *bl
 			return
 		}
 		// Succeeded to pass down here, transaction is valid
+		fmt.Println("valid transaction received")
 		results <- &blockValidationResult{
 			tIdx:                 tIdx,
 			txsChaincodeName:     txsChaincodeName,
