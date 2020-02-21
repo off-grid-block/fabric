@@ -86,7 +86,9 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		req.Header.Add("content-type", "text/plain")
 
 		res, _ := http.DefaultClient.Do(req)
-
+		if err != nil {
+			fmt.Println(err)
+		}
 		defer res.Body.Close()
 		body, _ := ioutil.ReadAll(res.Body)
 		fmt.Println("response received", body)

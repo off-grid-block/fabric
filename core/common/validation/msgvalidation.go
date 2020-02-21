@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	b64 "encoding/base64"
+	"encoding/json"
 
 	"fmt"
 	"io/ioutil"
@@ -35,6 +36,19 @@ import (
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
 )
+
+type verifySignatureOut struct {
+	Status        string `json:"status"`
+	Connection_id string `json:"connection_id"`
+}
+type attributes struct {
+	App_name string `json:"app_name"`
+	App_id   string `json:"app_id"`
+}
+type verifyProofOut struct {
+	Status     string     `json:"status"`
+	Attributes attributes `json:"attributes"`
+}
 
 var putilsLogger = flogging.MustGetLogger("protoutils")
 
@@ -103,7 +117,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
+	fmt.Println("shdr  is:",shdr)
 	// validate the signature
 	if shdr.Did == nil {
 		err = checkSignatureFromCreator(shdr.Creator, signedProp.Signature, signedProp.ProposalBytes, chdr.ChannelId)
@@ -131,6 +145,12 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 
 		url := "http://10.53.17.40:8003/verify_signature"
 
+		// payload := []byte(`{
+		// 	"message" : "hello world",
+		// 	"their_did" : "XnL4LSP6UHkuEVJVp8NgCG",
+		// 	"signature": "w6JzcsKgw43DnAXFvsOuH8Obw7HDmMO2OGMEasKXwpXDnx9fP8KQJH55wqoww4DDg8K7w53FvQnCnsKUw6jCoTbCq8O6w5bDkgzDkcOZw7YedMOgw7rDuShgAyfFvsOoeMKfLAs="
+		// 	}`)
+
 		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
 		fmt.Println("prepared payload", string(payload))
 		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
@@ -138,14 +158,63 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 		req.Header.Add("content-type", "text/plain")
 
 		res, _ := http.DefaultClient.Do(req)
-
+		if err != nil {
+			fmt.Println(err)
+		}
 		defer res.Body.Close()
 		body, _ := ioutil.ReadAll(res.Body)
-		fmt.Println("response received", body)
-		fmt.Println("stringified response", string(body))
-		fmt.Println()
-		fmt.Println()
-		fmt.Println()
+		var result map[string]interface{}
+		json.NewDecoder(res.Body).Decode(&result)
+
+		fmt.Println(string(body))
+
+		outJson := verifySignatureOut{}
+		err := json.Unmarshal(body, &outJson) //unmarshal it aka JSON.parse()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if outJson.Status != "Signature verified" {
+			//return nil, nil, nil, errors.Errorf("Signature verification failed")
+		}
+
+		attrib := "app_name,app_id"
+		an := "voter"
+		ai := "101"
+		conn_Id := outJson.Connection_id
+		url = "http://10.53.17.40:8003/verify_proof"
+		payload = []byte("{\"proof_attr\" : \"" + attrib + "\",\"connection_id\" : \"" + conn_Id + "\"}")
+
+		fmt.Println("prepared payload", string(payload))
+		req, _ = http.NewRequest("POST", url, bytes.NewBuffer(payload))
+
+		req.Header.Add("content-type", "text/plain")
+
+		res, _ = http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		defer res.Body.Close()
+		body, _ = ioutil.ReadAll(res.Body)
+
+		verifyOutJson := verifyProofOut{}
+		err = json.Unmarshal(body, &verifyOutJson) //unmarshal it aka JSON.parse()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Println("response received", verifyOutJson)
+		// fmt.Println("stringified response", string(body))
+		fmt.Println(verifyOutJson.Status)
+
+		if verifyOutJson.Status != "True" {
+			//return nil, nil, nil, errors.Errorf("Attributes missing !!!")
+		}
+
+		if !(verifyOutJson.Attributes.App_name == an && verifyOutJson.Attributes.App_id == ai) {
+			//return nil, nil, nil, errors.Errorf("Attribute values didnt match")
+		}
 
 	}
 
@@ -501,6 +570,11 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		putilsLogger.Debugf("ValidateTransactionEnvelope returns err %s", err)
 
 		if err != nil {
+			//for indy signed transactions, we need to add did in the transaction added to the ledger
+                        if shdr.Did != nil {
+                                shdr.Creator = shdr.Did
+                        }
+
 			putilsLogger.Errorf("validateEndorserTransaction returns err %s", err)
 			return payload, pb.TxValidationCode_INVALID_ENDORSER_TRANSACTION
 		} else {
