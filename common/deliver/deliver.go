@@ -209,6 +209,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		logger.Warningf("Failed to unmarshal channel header from %s: %s", addr, err)
 		return cb.Status_BAD_REQUEST, nil
 	}
+	shdr, err := utils.UnmarshalSignatureHeader(payload.Header.SignatureHeader)
 
 	err = h.validateChannelHeader(ctx, chdr)
 	if err != nil {
@@ -258,10 +259,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		logger.Warningf("[channel: %s] failed to create access control object due to %s", chdr.ChannelId, err)
 		return cb.Status_BAD_REQUEST, nil
 	}
-
-	if err := accessControl.Evaluate(); err != nil {
-		logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
-		return cb.Status_FORBIDDEN, nil
+	if shdr.Did == nil {
+		if err := accessControl.Evaluate(); err != nil {
+			logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
+			return cb.Status_FORBIDDEN, nil
+		}
 	}
 
 	if seekInfo.Start == nil || seekInfo.Stop == nil {
@@ -332,9 +334,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		// increment block number to support FAIL_IF_NOT_READY deliver behavior
 		number++
 
-		if err := accessControl.Evaluate(); err != nil {
-			logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
-			return cb.Status_FORBIDDEN, nil
+		if shdr.Did == nil {
+			if err := accessControl.Evaluate(); err != nil {
+				logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
+				return cb.Status_FORBIDDEN, nil
+			}
 		}
 
 		logger.Debugf("[channel: %s] Delivering block [%d] for (%p) for %s", chdr.ChannelId, block.Header.Number, seekInfo, addr)
