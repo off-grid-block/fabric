@@ -9,6 +9,7 @@ package deliver
 import (
 	"context"
 	"io"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -210,7 +211,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		return cb.Status_BAD_REQUEST, nil
 	}
 	shdr, err := utils.UnmarshalSignatureHeader(payload.Header.SignatureHeader)
-
+	fmt.Println("Did is:",shdr.Did)
 	err = h.validateChannelHeader(ctx, chdr)
 	if err != nil {
 		logger.Warningf("Rejecting deliver for %s due to envelope validation error: %s", addr, err)
