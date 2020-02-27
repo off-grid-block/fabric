@@ -18,17 +18,13 @@ package validation
 
 import (
 	"bytes"
-	"crypto/sha256"
-	b64 "encoding/base64"
-	"encoding/json"
 
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/hyperledger/fabric/common/indyverify"
 	mspmgmt "github.com/hyperledger/fabric/msp/mgmt"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
@@ -117,7 +113,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fmt.Println("shdr  is:",shdr)
+	fmt.Println("shdr  is:", shdr)
 	// validate the signature
 	if shdr.Did == nil {
 		err = checkSignatureFromCreator(shdr.Creator, signedProp.Signature, signedProp.ProposalBytes, chdr.ChannelId)
@@ -135,87 +131,10 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
 	} else {
-
-		hash := sha256.Sum256(signedProp.ProposalBytes)
-		encoded := b64.StdEncoding.EncodeToString(hash[:])
-		fmt.Println()
-		fmt.Println()
-		fmt.Println("calculated hash", hash)
-		fmt.Println("encoded hash", encoded)
-
-		url := "http://10.53.17.40:8003/verify_signature"
-
-		// payload := []byte(`{
-		// 	"message" : "hello world",
-		// 	"their_did" : "XnL4LSP6UHkuEVJVp8NgCG",
-		// 	"signature": "w6JzcsKgw43DnAXFvsOuH8Obw7HDmMO2OGMEasKXwpXDnx9fP8KQJH55wqoww4DDg8K7w53FvQnCnsKUw6jCoTbCq8O6w5bDkgzDkcOZw7YedMOgw7rDuShgAyfFvsOoeMKfLAs="
-		// 	}`)
-
-		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(signedProp.Signature) + "\"}")
-		fmt.Println("prepared payload", string(payload))
-		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
-
-		req.Header.Add("content-type", "text/plain")
-
-		res, _ := http.DefaultClient.Do(req)
-		if err != nil {
-			fmt.Println(err)
+		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
+		if status == false || err != nil {
+			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
 		}
-		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
-		var result map[string]interface{}
-		json.NewDecoder(res.Body).Decode(&result)
-
-		fmt.Println(string(body))
-
-		outJson := verifySignatureOut{}
-		err := json.Unmarshal(body, &outJson) //unmarshal it aka JSON.parse()
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		if outJson.Status != "Signature verified" {
-			//return nil, nil, nil, errors.Errorf("Signature verification failed")
-		}
-
-		attrib := "app_name,app_id"
-		an := "voter"
-		ai := "101"
-		conn_Id := outJson.Connection_id
-		url = "http://10.53.17.40:8003/verify_proof"
-		payload = []byte("{\"proof_attr\" : \"" + attrib + "\",\"connection_id\" : \"" + conn_Id + "\"}")
-
-		fmt.Println("prepared payload", string(payload))
-		req, _ = http.NewRequest("POST", url, bytes.NewBuffer(payload))
-
-		req.Header.Add("content-type", "text/plain")
-
-		res, _ = http.DefaultClient.Do(req)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		defer res.Body.Close()
-		body, _ = ioutil.ReadAll(res.Body)
-
-		verifyOutJson := verifyProofOut{}
-		err = json.Unmarshal(body, &verifyOutJson) //unmarshal it aka JSON.parse()
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Println("response received", verifyOutJson)
-		// fmt.Println("stringified response", string(body))
-		fmt.Println(verifyOutJson.Status)
-
-		if verifyOutJson.Status != "True" {
-			//return nil, nil, nil, errors.Errorf("Attributes missing !!!")
-		}
-
-		if !(verifyOutJson.Attributes.App_name == an && verifyOutJson.Attributes.App_id == ai) {
-			//return nil, nil, nil, errors.Errorf("Attribute values didnt match")
-		}
-
 	}
 
 	// Verify that the transaction ID has been computed properly.
@@ -508,44 +427,21 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 	// validate the signature in the envelope
 	//for indy user
-	if shdr.Did != nil {
-		fmt.Println("didi is not nill at verifier", shdr.Did)
-		fmt.Println("sig is", string(e.Signature))
-
-		hash := sha256.Sum256(e.Payload)
-		encoded := b64.StdEncoding.EncodeToString(hash[:])
-		fmt.Println()
-		fmt.Println()
-		fmt.Println("calculated hash", hash)
-		fmt.Println("encoded hash", encoded)
-
-		url := "http://10.53.17.40:8003/verify_signature"
-
-		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(e.Signature) + "\"}")
-		fmt.Println("prepared payload", string(payload))
-		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
-
-		req.Header.Add("content-type", "text/plain")
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			// we need to complete this also
-		}
-		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
-		fmt.Println("response received", body)
-		fmt.Println("stringified response", string(body))
-		fmt.Println()
-		//if err return nil, pb.TxValidationCode_BAD_COMMON_HEADER
-
-	} else {
-
+	if shdr.Did == nil {
 		//for fabric user
 		err = checkSignatureFromCreator(shdr.Creator, e.Signature, e.Payload, chdr.ChannelId)
 		if err != nil {
 			putilsLogger.Errorf("checkSignatureFromCreator returns err %s", err)
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
+
+	} else {
+
+		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		if status == false || err != nil {
+			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
+		}
+
 	}
 
 	// TODO: ensure that creator can transact with us (some ACLs?) which set of APIs is supposed to give us this info?
@@ -571,9 +467,9 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 		if err != nil {
 			//for indy signed transactions, we need to add did in the transaction added to the ledger
-                        if shdr.Did != nil {
-                                shdr.Creator = shdr.Did
-                        }
+			if shdr.Did != nil {
+				shdr.Creator = shdr.Did
+			}
 
 			putilsLogger.Errorf("validateEndorserTransaction returns err %s", err)
 			return payload, pb.TxValidationCode_INVALID_ENDORSER_TRANSACTION
