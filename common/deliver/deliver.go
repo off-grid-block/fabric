@@ -8,8 +8,8 @@ package deliver
 
 import (
 	"context"
-	"io"
 	"fmt"
+	"io"
 	"math"
 	"strconv"
 	"time"
@@ -17,6 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/crypto"
 	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/hyperledger/fabric/common/indyverify"
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
 	"github.com/hyperledger/fabric/common/policies"
 	"github.com/hyperledger/fabric/common/util"
@@ -211,7 +212,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		return cb.Status_BAD_REQUEST, nil
 	}
 	shdr, err := utils.UnmarshalSignatureHeader(payload.Header.SignatureHeader)
-	fmt.Println("Did is:",shdr.Did)
+	fmt.Println("Did is:", shdr.Did)
 	err = h.validateChannelHeader(ctx, chdr)
 	if err != nil {
 		logger.Warningf("Rejecting deliver for %s due to envelope validation error: %s", addr, err)
@@ -264,6 +265,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		if err := accessControl.Evaluate(); err != nil {
 			logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
 			return cb.Status_FORBIDDEN, nil
+		}
+	} else {
+		status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+		if status == false || err != nil {
+			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy")
 		}
 	}
 
@@ -339,6 +345,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			if err := accessControl.Evaluate(); err != nil {
 				logger.Warningf("[channel: %s] Client authorization revoked for deliver request from %s: %s", chdr.ChannelId, addr, err)
 				return cb.Status_FORBIDDEN, nil
+			}
+		} else {
+			status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+			if status == false || err != nil {
+				return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy")
 			}
 		}
 
