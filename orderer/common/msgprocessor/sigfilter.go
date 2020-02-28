@@ -66,7 +66,7 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		return fmt.Errorf("GetSignatureHeaderFromBytes failed, err %s", err)
 	}
 	if shdr.Did != nil {
-		status, err := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
+		status, err, _ := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
 		if status == false || err != nil {
 			return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
 		}

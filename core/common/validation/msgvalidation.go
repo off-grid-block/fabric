@@ -18,6 +18,7 @@ package validation
 
 import (
 	"bytes"
+	"encoding/json"
 
 	"fmt"
 
@@ -131,7 +132,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
 	} else {
-		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
+		status, err, _ := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
 		if status == false || err != nil {
 			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
 		}
@@ -437,11 +438,25 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 	} else {
 
-		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		status, err, connection_id := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
 		if status == false || err != nil {
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
-
+		indycreatorbytes := shdr.Creator
+		var indycreator map[string]interface{}
+		if err := json.Unmarshal(indycreatorbytes, &indycreator); err != nil {
+			fmt.Println("error unmarshaling indycreator")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+		fmt.Println(indycreator)
+		did := indycreator["did"]
+		indycreator["connectionid"] = connection_id
+		fmt.Println("did is", did)
+		shdr.Creator, err = json.Marshal(indycreator)
+		if err != nil {
+			fmt.Println("error adding connection ID to creator")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
 	}
 
 	// TODO: ensure that creator can transact with us (some ACLs?) which set of APIs is supposed to give us this info?
