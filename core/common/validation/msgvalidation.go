@@ -439,7 +439,7 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
 		if status == false || err != nil {
-			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 
 	}
