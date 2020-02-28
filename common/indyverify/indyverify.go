@@ -44,6 +44,7 @@ func Indyverify(ProposalBytes []byte, Did []byte, Signature []byte) (status bool
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Received error from Indy server", err)
+		return false, errors.New("Error connecting to Indy server")
 	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
@@ -56,6 +57,7 @@ func Indyverify(ProposalBytes []byte, Did []byte, Signature []byte) (status bool
 	err = json.Unmarshal(body, &outJson)
 	if err != nil {
 		fmt.Println("error unmarshaling response from Indy", err)
+		return false, errors.New("error unmarshaling response from Indy")
 	}
 
 	if outJson.Status != "Signature verified" {
