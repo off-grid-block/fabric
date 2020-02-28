@@ -7,12 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package msgprocessor
 
 import (
-	"bytes"
-	"crypto/sha256"
-	b64 "encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+
+	"github.com/hyperledger/fabric/common/indyverify"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -69,34 +66,10 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		return fmt.Errorf("GetSignatureHeaderFromBytes failed, err %s", err)
 	}
 	if shdr.Did != nil {
-		fmt.Println("received indy signed proposal, verifying by indy")
-		hash := sha256.Sum256(message.Payload)
-		encoded := b64.StdEncoding.EncodeToString(hash[:])
-		fmt.Println()
-		fmt.Println()
-		fmt.Println("calculated hash", hash)
-		fmt.Println("encoded hash", encoded)
-
-		url := "http://10.53.17.40:8003/verify_signature"
-
-		payload := []byte("{\"message\" : \"" + encoded + "\",\"their_did\" : \"" + string(shdr.Did) + "\",\"signature\": \"" + string(message.Signature) + "\"}")
-		fmt.Println("prepared payload", string(payload))
-		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(payload))
-
-		req.Header.Add("content-type", "text/plain")
-
-		res, _ := http.DefaultClient.Do(req)
-		if err != nil {
-			fmt.Println(err)
+		status, err := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
+		if status == false || err != nil {
+			return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
 		}
-		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
-		fmt.Println("response received", body)
-		fmt.Println("stringified response", string(body))
-		fmt.Println()
-		fmt.Println()
-		fmt.Println()
-		return nil
 	}
 	ordererConf, ok := sf.support.OrdererConfig()
 	if !ok {
