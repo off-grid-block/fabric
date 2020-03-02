@@ -19,6 +19,11 @@ type verifySignatureOut struct {
 
 func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool, err error, id string) {
 
+	fmt.Println("\n\ninside indyverify")
+	fmt.Println("did:", did)
+	fmt.Println("proposalbytes", ProposalBytes)
+	fmt.Println("signature", signature)
+
 	hash := sha256.Sum256(ProposalBytes)
 	encoded := b64.StdEncoding.EncodeToString(hash[:])
 	fmt.Println()
