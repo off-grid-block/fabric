@@ -36,7 +36,7 @@ func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool
 		Signature string `json:"signature"`
 	}
 	url := "http://10.53.17.40:8003/verify_signature"
-	payload := Payload{Message: encoded, Did: string(did), Signature: string(signature)}
+	payload := &Payload{Message: encoded, Did: string(did), Signature: string(signature)}
 	payloadbytes, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println(err)
