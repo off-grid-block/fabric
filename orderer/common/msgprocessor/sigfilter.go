@@ -65,12 +65,7 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 	if err != nil {
 		return fmt.Errorf("GetSignatureHeaderFromBytes failed, err %s", err)
 	}
-	if shdr.Did != nil {
-		status, err, _ := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
-		if status == false || err != nil {
-			return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
-		}
-	}
+
 	ordererConf, ok := sf.support.OrdererConfig()
 	if !ok {
 		logger.Panic("Programming error: orderer config not found")
@@ -95,10 +90,17 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		return fmt.Errorf("could not find policy %s", policyName)
 	}
 	fmt.Println("I was called by orderer")
-	err = policy.Evaluate(signedData)
-	if err != nil {
-		logger.Debugf("SigFilter evaluation failed: %s, policyName: %s, ConsensusState: %s", err.Error(), policyName, ordererConf.ConsensusState())
-		return errors.Wrap(errors.WithStack(ErrPermissionDenied), err.Error())
+	if shdr.Did != nil {
+		status, err, _ := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
+		if status == false || err != nil {
+			return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
+		}
+	} else {
+		err = policy.Evaluate(signedData)
+		if err != nil {
+			logger.Debugf("SigFilter evaluation failed: %s, policyName: %s, ConsensusState: %s", err.Error(), policyName, ordererConf.ConsensusState())
+			return errors.Wrap(errors.WithStack(ErrPermissionDenied), err.Error())
+		}
 	}
 	return nil
 }
