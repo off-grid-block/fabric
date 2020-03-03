@@ -131,25 +131,37 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			}
 			return nil, nil, nil, errors.Errorf("access denied: channel [%s] creator org [%s]", chdr.ChannelId, sId.Mspid)
 		}
+		// Verify that the transaction ID has been computed properly.
+		// This check is needed to ensure that the lookup into the ledger
+		// for the same TxID catches duplicates.
+		err = utils.CheckTxID(
+			chdr.TxId,
+			shdr.Nonce,
+			shdr.Creator)
+		if err != nil {
+			fmt.Println("txid didn't match")
+			return nil, nil, nil, err
+		} else {
+			fmt.Println("txid matches, received txid:", chdr.TxId)
+		}
 	} else {
 		status, err, _ := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
 		if status == false || err != nil {
 			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
 		}
-	}
-
-	// Verify that the transaction ID has been computed properly.
-	// This check is needed to ensure that the lookup into the ledger
-	// for the same TxID catches duplicates.
-	err = utils.CheckTxID(
-		chdr.TxId,
-		shdr.Nonce,
-		shdr.Creator)
-	if err != nil {
-		fmt.Println("txid didn't match")
-		return nil, nil, nil, err
-	} else {
-		fmt.Println("txid matches, received txid:", chdr.TxId)
+		// Verify that the transaction ID has been computed properly.
+		// This check is needed to ensure that the lookup into the ledger
+		// for the same TxID catches duplicates.
+		err = utils.CheckTxID(
+			chdr.TxId,
+			shdr.Nonce,
+			nil)
+		if err != nil {
+			fmt.Println("txid didn't match")
+			return nil, nil, nil, err
+		} else {
+			fmt.Println("txid matches, received txid:", chdr.TxId)
+		}
 	}
 
 	// continue the validation in a way that depends on the type specified in the header
@@ -467,16 +479,27 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		// Verify that the transaction ID has been computed properly.
 		// This check is needed to ensure that the lookup into the ledger
 		// for the same TxID catches duplicates.
-		err = utils.CheckTxID(
-			chdr.TxId,
-			shdr.Nonce,
-			shdr.Creator)
+		if shdr.Did == nil {
+			err = utils.CheckTxID(
+				chdr.TxId,
+				shdr.Nonce,
+				shdr.Creator)
 
-		if err != nil {
-			putilsLogger.Errorf("CheckTxID returns err %s", err)
-			return nil, pb.TxValidationCode_BAD_PROPOSAL_TXID
+			if err != nil {
+				putilsLogger.Errorf("CheckTxID returns err %s", err)
+				return nil, pb.TxValidationCode_BAD_PROPOSAL_TXID
+			}
+		} else {
+			err = utils.CheckTxID(
+				chdr.TxId,
+				shdr.Nonce,
+				nil)
+
+			if err != nil {
+				putilsLogger.Errorf("CheckTxID returns err %s", err)
+				return nil, pb.TxValidationCode_BAD_PROPOSAL_TXID
+			}
 		}
-
 		err = validateEndorserTransaction(payload.Data, payload.Header)
 		putilsLogger.Debugf("ValidateTransactionEnvelope returns err %s", err)
 
