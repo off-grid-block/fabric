@@ -509,11 +509,6 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		putilsLogger.Debugf("ValidateTransactionEnvelope returns err %s", err)
 
 		if err != nil {
-			//for indy signed transactions, we need to add did in the transaction added to the ledger
-			if shdr.Did != nil {
-				shdr.Creator = shdr.Did
-			}
-
 			putilsLogger.Errorf("validateEndorserTransaction returns err %s", err)
 			return payload, pb.TxValidationCode_INVALID_ENDORSER_TRANSACTION
 		} else {
