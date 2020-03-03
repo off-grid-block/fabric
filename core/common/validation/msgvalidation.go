@@ -461,8 +461,8 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 		fmt.Println(indycreator)
-		did := indycreator["did"]
-		indycreator["connectionid"] = connection_id
+		did := indycreator["Did"]
+		indycreator["ConnectionID"] = connection_id
 		fmt.Println("did is", did)
 		shdr.Creator, err = json.Marshal(indycreator)
 		if err != nil {
