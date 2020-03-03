@@ -13,8 +13,8 @@ import (
 )
 
 type verifySignatureOut struct {
-	Status        string `json:"status"`
-	Connection_id string `json:"connection_id"`
+	Status       string `json:"status"`
+	ConnectionID string `json:"connection_id"`
 }
 
 func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool, err error, id string) {
@@ -109,5 +109,6 @@ func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool
 			return nil, nil, nil, errors.Errorf("Attribute values didnt match")
 		}
 	*/
-	return true, nil, respJson.Connection_id
+	fmt.Println("ConnID : ", respJson.ConnectionID)
+	return true, nil, respJson.ConnectionID
 }

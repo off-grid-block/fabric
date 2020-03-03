@@ -455,14 +455,18 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 		indycreatorbytes := shdr.Creator
-		var indycreator map[string]interface{}
+		type IndyCreator struct {
+			Did          string
+			ConnectionID string
+		}
+		indycreator := IndyCreator{}
 		if err := json.Unmarshal(indycreatorbytes, &indycreator); err != nil {
 			fmt.Println("error unmarshaling indycreator")
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 		fmt.Println(indycreator)
-		did := indycreator["Did"]
-		indycreator["ConnectionID"] = connection_id
+		did := indycreator.Did
+		indycreator.ConnectionID = connection_id
 		fmt.Println("did is", did)
 		shdr.Creator, err = json.Marshal(indycreator)
 		if err != nil {
