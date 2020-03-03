@@ -469,6 +469,7 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		indycreator.ConnectionID = connection_id
 		fmt.Println("did is", did)
 		shdr.Creator, err = json.Marshal(indycreator)
+		payload.Header.SignatureHeader = utils.MarshalOrPanic(shdr)
 		if err != nil {
 			fmt.Println("error adding connection ID to creator")
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
