@@ -146,7 +146,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	} else {
 		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
 		if status == false || err != nil {
-			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
+			return nil, nil, nil, errors.Errorf("error verifying signature by Indy", err)
 		}
 		// Verify that the transaction ID has been computed properly.
 		// This check is needed to ensure that the lookup into the ledger

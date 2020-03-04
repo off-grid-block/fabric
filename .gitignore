@@ -48,3 +48,5 @@ examples/e2e_cli/crypto-config/*
 # vscode settings
 .vscode
 maven_data.xml
+common/indyverify/cover.html
+common/indyverify/cover.txt
