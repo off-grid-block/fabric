@@ -33,9 +33,6 @@ func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (S
 		return false, errors.New("DID size not equal to 22")
 	}
 	Signature := string(SignatureBytes)
-	if len(Signature) != 140 {
-		return false, errors.New("Signature size not equal to 140")
-	}
 
 	//Create Payload
 	ProposalHash := sha256.Sum256(ProposalBytes)
@@ -72,7 +69,7 @@ func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (S
 		return false, errors.New("error unmarshaling response from Indy")
 	}
 	if ResponseJson.Status != "Signature verified" {
-		return false, errors.New(ResponseJson.Status)
+		return false, errors.New("Response from Indy:" + ResponseJson.Status)
 	}
 	return true, nil
 }
