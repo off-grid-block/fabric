@@ -18,7 +18,6 @@ package validation
 
 import (
 	"bytes"
-	"encoding/json"
 
 	"fmt"
 
@@ -450,28 +449,8 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 	} else {
 
-		status, err, connection_id := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		status, err, _ := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
 		if status == false || err != nil {
-			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
-		}
-		indycreatorbytes := shdr.Creator
-		type IndyCreator struct {
-			Did          string
-			ConnectionID string
-		}
-		indycreator := IndyCreator{}
-		if err := json.Unmarshal(indycreatorbytes, &indycreator); err != nil {
-			fmt.Println("error unmarshaling indycreator")
-			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
-		}
-		fmt.Println(indycreator)
-		did := indycreator.Did
-		indycreator.ConnectionID = connection_id
-		fmt.Println("did is", did)
-		shdr.Creator, err = json.Marshal(indycreator)
-		payload.Header.SignatureHeader = utils.MarshalOrPanic(shdr)
-		if err != nil {
-			fmt.Println("error adding connection ID to creator")
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 	}
