@@ -144,7 +144,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			fmt.Println("txid matches, received txid:", chdr.TxId)
 		}
 	} else {
-		status, err, _ := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
+		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
 		if status == false || err != nil {
 			return nil, nil, nil, errors.Errorf("error verifying signature by Indy")
 		}
@@ -449,7 +449,7 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 
 	} else {
 
-		status, err, _ := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
 		if status == false || err != nil {
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}

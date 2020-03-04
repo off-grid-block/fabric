@@ -267,7 +267,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			return cb.Status_FORBIDDEN, nil
 		}
 	} else {
-		status, err, _ := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+		status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
 		if status == false || err != nil {
 			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy")
 		}
@@ -347,7 +347,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 				return cb.Status_FORBIDDEN, nil
 			}
 		} else {
-			status, err, _ := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+			status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
 			if status == false || err != nil {
 				return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy")
 			}
