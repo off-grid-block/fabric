@@ -17,7 +17,8 @@ type verifySignatureOut struct {
 	ConnectionID string `json:"connection_id"`
 }
 
-func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool, err error, id string) {
+// Indyverify - this function receives PB bytes, signature and DID
+func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool, id string, err error ) {
 
 	fmt.Println("\n\ninside indyverify")
 	fmt.Println("did:", did)
@@ -50,7 +51,7 @@ func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Received error from Indy server", err)
-		return false, errors.New("Error connecting to Indy server"), ""
+		return false, "", errors.New("Error connecting to Indy server")
 	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
@@ -59,22 +60,23 @@ func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool
 
 	fmt.Println(string(body))
 
-	respJson := verifySignatureOut{}
-	err = json.Unmarshal(body, &respJson)
+	respJSON := verifySignatureOut{}
+	err = json.Unmarshal(body, &respJSON)
 	if err != nil {
 		fmt.Println("error unmarshaling response from Indy", err)
-		return false, errors.New("error unmarshaling response from Indy"), ""
+		return false, "", errors.New("error unmarshaling response from Indy")
 	}
 
-	if respJson.Status != "Signature verified" {
-		return false, errors.New(respJson.Status), ""
+
+	if respJSON.Status != "Signature verified" {
+		return false, "", errors.New(respJSON.Status)
 	}
 	// Verify proof code
 	/*
 		attrib := "app_name,app_id"
 		an := "voter"
 		ai := "101"
-		conn_Id := respJson.Connection_id
+		conn_Id := respJSON.Connection_id
 		url = "http://10.53.17.40:8003/verify_proof"
 		payload = []byte("{\"proof_attr\" : \"" + attrib + "\",\"connection_id\" : \"" + conn_Id + "\"}")
 
@@ -91,24 +93,25 @@ func Indyverify(ProposalBytes []byte, did []byte, signature []byte) (status bool
 		defer res.Body.Close()
 		body, _ = ioutil.ReadAll(res.Body)
 
-		verifyrespJson := verifyProofOut{}
-		err = json.Unmarshal(body, &verifyrespJson) //unmarshal it aka JSON.parse()
+		verifyrespJSON := verifyProofOut{}
+		err = json.Unmarshal(body, &verifyrespJSON) //unmarshal it aka JSON.parse()
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		fmt.Println("response received", verifyrespJson)
+		fmt.Println("response received", verifyrespJSON)
 		fmt.Println("stringified response", string(body))
-		fmt.Println(verifyrespJson.Status)
+		fmt.Println(verifyrespJSON.Status)
 
-		if verifyrespJson.Status != "True" {
+		if verifyrespJSON.Status != "True" {
 			return nil, nil, nil, errors.Errorf("Attributes missing !!!")
 		}
 
-		if !(verifyrespJson.Attributes.App_name == an && verifyrespJson.Attributes.App_id == ai) {
+		if !(verifyrespJSON.Attributes.App_name == an && verifyrespJSON.Attributes.App_id == ai) {
 			return nil, nil, nil, errors.Errorf("Attribute values didnt match")
 		}
 	*/
-	fmt.Println("ConnID : ", respJson.ConnectionID)
-	return true, nil, respJson.ConnectionID
+	fmt.Println("ConnID : ", respJSON.ConnectionID)
+	return true, respJSON.ConnectionID, nil
 }
+
