@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-type IndyResponse struct {
+type indyResponse struct {
 	Status       string `json:"status"`
 	ConnectionID string `json:"connection_id"`
 }
@@ -19,6 +19,7 @@ type IndyResponse struct {
 func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (Status bool, err error) {
 
 	//Validate Inputs
+
 	if len(ProposalBytes) == 0 {
 		return false, errors.New("Empty proposal bytes received while verifying Indy signature")
 	}
@@ -50,8 +51,8 @@ func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (S
 	PayloadBytesString := string(PayloadBytes)
 
 	//Verify Signature
-	VerifyUrl := "http://10.53.17.40:8003/verify_signature"
-	Request, _ := http.NewRequest("POST", VerifyUrl, bytes.NewBuffer([]byte(PayloadBytesString)))
+	VerifyURL := "http://10.53.17.40:8003/verify_signature"
+	Request, _ := http.NewRequest("POST", VerifyURL, bytes.NewBuffer([]byte(PayloadBytesString)))
 	Request.Header.Add("content-type", "text/plain")
 	Response, err := http.DefaultClient.Do(Request)
 	if Response.StatusCode != 200 {
@@ -63,13 +64,13 @@ func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (S
 	ResponseBody, _ := ioutil.ReadAll(Response.Body)
 	var Result map[string]interface{}
 	json.NewDecoder(Response.Body).Decode(&Result)
-	ResponseJson := IndyResponse{}
-	err = json.Unmarshal(ResponseBody, &ResponseJson)
+	ResponseJSON := indyResponse{}
+	err = json.Unmarshal(ResponseBody, &ResponseJSON)
 	if err != nil {
 		return false, errors.New("error unmarshaling response from Indy")
 	}
-	if ResponseJson.Status != "Signature verified" {
-		return false, errors.New("Response from Indy:" + ResponseJson.Status)
+	if ResponseJSON.Status != "Signature verified" {
+		return false, errors.New("Response from Indy:" + ResponseJSON.Status)
 	}
 	return true, nil
 }
