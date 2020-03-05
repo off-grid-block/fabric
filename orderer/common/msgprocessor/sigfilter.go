@@ -89,7 +89,8 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 	if !ok {
 		return fmt.Errorf("could not find policy %s", policyName)
 	}
-	fmt.Println("I was called by orderer")
+
+	// Condition added to verify Indy signed transactions by Indy verifier.
 	if shdr.Did != nil {
 		status, err := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
 		if status == false || err != nil {

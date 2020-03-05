@@ -237,8 +237,6 @@ func (cs *ChaincodeSupport) ExecuteLegacyInit(txParams *ccprovider.TransactionPa
 // Execute invokes chaincode and returns the original response.
 func (cs *ChaincodeSupport) Execute(txParams *ccprovider.TransactionParams, cccid *ccprovider.CCContext, input *pb.ChaincodeInput) (*pb.Response, *pb.ChaincodeEvent, error) {
 	resp, err := cs.Invoke(txParams, cccid, input)
-	fmt.Println("inside chaincodesupport.go")
-	fmt.Println("resp is", resp)
 
 	return processChaincodeExecutionResult(txParams.TxID, cccid.Name, resp, err)
 }
@@ -289,7 +287,6 @@ func (cs *ChaincodeSupport) Invoke(txParams *ccprovider.TransactionParams, cccid
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("inside Invoke")
 
 	// TODO add Init exactly once semantics here once new lifecycle
 	// is available.  Enforced if the target channel is using the new lifecycle
@@ -302,7 +299,6 @@ func (cs *ChaincodeSupport) Invoke(txParams *ccprovider.TransactionParams, cccid
 	// inited, then, if true, only allow cctyp pb.ChaincodeMessage_TRANSACTION,
 	// otherwise, only allow cctype pb.ChaincodeMessage_INIT,
 	cctype := pb.ChaincodeMessage_TRANSACTION
-	fmt.Println("inside Invoke2")
 	return cs.execute(cctype, txParams, cccid, input, h)
 }
 
@@ -313,7 +309,6 @@ func (cs *ChaincodeSupport) execute(cctyp pb.ChaincodeMessage_Type, txParams *cc
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to create chaincode message")
 	}
-	fmt.Println("inside execute2")
 	ccresp, err := h.Execute(txParams, cccid, ccMsg, cs.ExecuteTimeout)
 	if err != nil {
 		return nil, errors.WithMessage(err, fmt.Sprintf("error sending"))

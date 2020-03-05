@@ -143,7 +143,6 @@ func (s *SupportImpl) Execute(txParams *ccprovider.TransactionParams, cid, name,
 	input.Decorations = make(map[string][]byte)
 	input = decoration.Apply(prop, input, decorators...)
 	txParams.ProposalDecorations = input.Decorations
-	fmt.Println("inside support.go")
 	return s.ChaincodeSupport.Execute(txParams, cccid, input)
 }
 

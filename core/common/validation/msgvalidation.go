@@ -33,19 +33,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type verifySignatureOut struct {
-	Status        string `json:"status"`
-	Connection_id string `json:"connection_id"`
-}
-type attributes struct {
-	App_name string `json:"app_name"`
-	App_id   string `json:"app_id"`
-}
-type verifyProofOut struct {
-	Status     string     `json:"status"`
-	Attributes attributes `json:"attributes"`
-}
-
 var putilsLogger = flogging.MustGetLogger("protoutils")
 
 // validateChaincodeProposalMessage checks the validity of a Proposal message of type CHAINCODE
@@ -116,6 +103,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	fmt.Println("shdr  is:", shdr)
 	// validate the signature
 	if shdr.Did == nil {
+		//for fabric user
 		err = checkSignatureFromCreator(shdr.Creator, signedProp.Signature, signedProp.ProposalBytes, chdr.ChannelId)
 		if err != nil {
 			// log the exact message on the peer but return a generic error message to
@@ -144,6 +132,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			fmt.Println("txid matches, received txid:", chdr.TxId)
 		}
 	} else {
+		//for Indy user
 		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
 		if status == false || err != nil {
 			return nil, nil, nil, errors.Errorf("error verifying signature by Indy: %v", err)
@@ -241,10 +230,10 @@ func validateSignatureHeader(sHdr *common.SignatureHeader) error {
 		return errors.New("invalid nonce specified in the header")
 	}
 
-	// ensure that there is a creator
+	// ensure that there is a creator, either fabric or Indy
 	if sHdr.Creator == nil || len(sHdr.Creator) == 0 {
 		if sHdr.Did == nil || len(sHdr.Did) == 0 {
-			return errors.New("invalid creator specified in the header" + string(sHdr.Did) + string(sHdr.Creator) + "done")
+			return errors.New("invalid creator specified in the header")
 		}
 	}
 
@@ -438,7 +427,6 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 	}
 
 	// validate the signature in the envelope
-	//for indy user
 	if shdr.Did == nil {
 		//for fabric user
 		err = checkSignatureFromCreator(shdr.Creator, e.Signature, e.Payload, chdr.ChannelId)
@@ -448,7 +436,7 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		}
 
 	} else {
-
+		//for indy user
 		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
 		if status == false || err != nil {
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE

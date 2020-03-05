@@ -19,7 +19,6 @@ type indyResponse struct {
 func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (Status bool, err error) {
 
 	//Validate Inputs
-
 	if len(ProposalBytes) == 0 {
 		return false, errors.New("Empty proposal bytes received while verifying Indy signature")
 	}

@@ -1240,20 +1240,16 @@ func (h *Handler) HandleInvokeChaincode(msg *pb.ChaincodeMessage, txContext *Tra
 func (h *Handler) Execute(txParams *ccprovider.TransactionParams, cccid *ccprovider.CCContext, msg *pb.ChaincodeMessage, timeout time.Duration) (*pb.ChaincodeMessage, error) {
 	chaincodeLogger.Debugf("Entry")
 	defer chaincodeLogger.Debugf("Exit")
-	fmt.Println("inside 10execute")
 	txParams.CollectionStore = h.getCollectionStore(msg.ChannelId)
 	txParams.IsInitTransaction = (msg.Type == pb.ChaincodeMessage_INIT)
-	fmt.Println("inside 11execute")
 
 	txctx, err := h.TXContexts.Create(txParams)
 	if err != nil {
 		return nil, err
 	}
 	defer h.TXContexts.Delete(msg.ChannelId, msg.Txid)
-	fmt.Println("inside 12execute")
 
 	if err := h.setChaincodeProposal(txParams.SignedProp, txParams.Proposal, msg); err != nil {
-		fmt.Println("err is", err)
 
 		return nil, err
 	}
@@ -1272,7 +1268,6 @@ func (h *Handler) Execute(txParams *ccprovider.TransactionParams, cccid *ccprovi
 	case <-h.streamDone():
 		err = errors.New("chaincode stream terminated")
 	}
-	fmt.Println("ccresp", ccresp)
 
 	return ccresp, err
 }

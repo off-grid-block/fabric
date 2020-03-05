@@ -2,6 +2,7 @@ package indyverify
 
 import "testing"
 
+//Test empty input to Indyverify function
 func TestEmptyInput(t *testing.T) {
 	var a, b, c []byte
 
@@ -13,10 +14,11 @@ func TestEmptyInput(t *testing.T) {
 	}
 }
 
+//Test invalid DID size
 func TestInvalidDid(t *testing.T) {
 	var pb, did, signature []byte
 	pb = []byte("input value")
-	did = []byte("123456789012345") //modify the input
+	did = []byte("123456789012345")
 	signature = []byte("test input")
 
 	result, err := Indyverify(pb, did, signature)
@@ -27,6 +29,7 @@ func TestInvalidDid(t *testing.T) {
 	}
 }
 
+//Test invalid signature (receives valid DID and payload,but invalid signature)
 func TestInvalidSignature(t *testing.T) {
 	var pb, did, signature []byte
 	pb = []byte("input value")
@@ -41,6 +44,7 @@ func TestInvalidSignature(t *testing.T) {
 	}
 }
 
+//Test invalid Payload (receives valid DID and signature,but invalid payloadbytes)
 func TestInvalidPB(t *testing.T) {
 	var pb, did, signature []byte
 	pb = []byte("input value") //modify the input
@@ -54,6 +58,8 @@ func TestInvalidPB(t *testing.T) {
 		t.Logf("success, expected false and got %v and error is %v", result, err)
 	}
 }
+
+//Tests success when correct arguments are given
 func TestSuccess(t *testing.T) {
 	var pb, did, signature []byte
 	pb = []byte("test") //modify the input

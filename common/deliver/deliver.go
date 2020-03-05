@@ -8,7 +8,6 @@ package deliver
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -212,7 +211,6 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 		return cb.Status_BAD_REQUEST, nil
 	}
 	shdr, err := utils.UnmarshalSignatureHeader(payload.Header.SignatureHeader)
-	fmt.Println("Did is:", shdr.Did)
 	err = h.validateChannelHeader(ctx, chdr)
 	if err != nil {
 		logger.Warningf("Rejecting deliver for %s due to envelope validation error: %s", addr, err)
@@ -267,6 +265,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			return cb.Status_FORBIDDEN, nil
 		}
 	} else {
+		//Indy verification
 		status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
 		if status == false || err != nil {
 			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy, %v", err)
@@ -347,6 +346,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 				return cb.Status_FORBIDDEN, nil
 			}
 		} else {
+			//Indy verify
 			status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
 			if status == false || err != nil {
 				return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy: %v", err)
