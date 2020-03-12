@@ -143,7 +143,6 @@ func (e *Endorser) callChaincode(txParams *ccprovider.TransactionParams, version
 	var ccevent *pb.ChaincodeEvent
 
 	// is this a system chaincode
-	fmt.Println("inside callChaincode")
 	res, ccevent, err = e.s.Execute(txParams, txParams.ChannelID, cid.Name, version, txParams.TxID, txParams.SignedProp, txParams.Proposal, input)
 	if err != nil {
 		return nil, nil, err
@@ -217,12 +216,10 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 	// we do expect the payload to be a ChaincodeInvocationSpec
 	// if we are supporting other payloads in future, this be glaringly point
 	// as something that should change
-	fmt.Println("tp1")
 	cis, err := putils.GetChaincodeInvocationSpec(txParams.Proposal)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	fmt.Println("tp2")
 
 	var cdLedger ccprovider.ChaincodeDefinition
 	var version string
@@ -233,7 +230,6 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 			return nil, nil, nil, nil, errors.WithMessage(err, fmt.Sprintf("make sure the chaincode %s has been successfully instantiated and try again", cid.Name))
 		}
 		version = cdLedger.CCVersion()
-		fmt.Println("tp10")
 
 		/* err = e.s.CheckInstantiationPolicy(cid.Name, version, cdLedger)
 		if err != nil {
@@ -242,7 +238,6 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 	} else {
 		version = util.GetSysCCVersion()
 	}
-	fmt.Println("tp3")
 
 	// ---3. execute the proposal and get simulation results
 	var simResult *ledger.TxSimulationResults
@@ -254,10 +249,8 @@ func (e *Endorser) SimulateProposal(txParams *ccprovider.TransactionParams, cid 
 		endorserLogger.Errorf("[%s][%s] failed to invoke chaincode %s, error: %+v", txParams.ChannelID, shorttxid(txParams.TxID), cid, err)
 		return nil, nil, nil, nil, err
 	}
-	fmt.Println("tp4")
 
 	if txParams.TXSimulator != nil {
-		fmt.Println("tp5")
 
 		if simResult, err = txParams.TXSimulator.GetTxSimulationResults(); err != nil {
 			txParams.TXSimulator.Done()
@@ -371,7 +364,6 @@ func (e *Endorser) preProcess(signedProp *pb.SignedProposal) (*validateResult, e
 	}
 
 	shdr, err := putils.GetSignatureHeader(hdr.SignatureHeader)
-	fmt.Println("sig header is ", shdr)
 	if err != nil {
 		vr.resp = &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: err.Error()}}
 		return vr, err
@@ -508,11 +500,9 @@ func (e *Endorser) ProcessProposal(ctx context.Context, signedProp *pb.SignedPro
 	// 1 -- simulate
 	cd, res, simulationResult, ccevent, err := e.SimulateProposal(txParams, hdrExt.ChaincodeId)
 	if err != nil {
-		fmt.Println("error is ", err)
 		return &pb.ProposalResponse{Response: &pb.Response{Status: 500, Message: err.Error()}}, nil
 	}
 	if res != nil {
-		fmt.Println("res is ", res)
 		if res.Status >= shim.ERROR {
 			endorserLogger.Errorf("[%s][%s] simulateProposal() resulted in chaincode %s response status %d for txid: %s", chainID, shorttxid(txid), hdrExt.ChaincodeId, res.Status, txid)
 			var cceventBytes []byte

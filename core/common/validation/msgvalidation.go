@@ -19,8 +19,6 @@ package validation
 import (
 	"bytes"
 
-	"fmt"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -100,7 +98,6 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fmt.Println("shdr  is:", shdr)
 	// validate the signature
 	if shdr.Did == nil {
 		//for fabric user
@@ -126,10 +123,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			shdr.Nonce,
 			shdr.Creator)
 		if err != nil {
-			fmt.Println("txid didn't match")
 			return nil, nil, nil, err
-		} else {
-			fmt.Println("txid matches, received txid:", chdr.TxId)
 		}
 	} else {
 		//for Indy user
@@ -145,10 +139,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			shdr.Nonce,
 			nil)
 		if err != nil {
-			fmt.Println("txid didn't match")
 			return nil, nil, nil, err
-		} else {
-			fmt.Println("txid matches, received txid:", chdr.TxId)
 		}
 	}
 
@@ -219,7 +210,6 @@ func checkSignatureFromCreator(creatorBytes []byte, sig []byte, msg []byte, Chai
 
 // checks for a valid SignatureHeader
 func validateSignatureHeader(sHdr *common.SignatureHeader) error {
-	fmt.Println("shdr is:", sHdr)
 	// check for nil argument
 	if sHdr == nil {
 		return errors.New("nil SignatureHeader provided")
