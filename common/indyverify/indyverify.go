@@ -60,7 +60,7 @@ func Indyverify(ProposalBytes []byte, DidBytes []byte, SignatureBytes []byte) (S
 	Request, _ := http.NewRequest("POST", VerifyURL, bytes.NewBuffer([]byte(PayloadBytesString)))
 	Request.Header.Add("content-type", "text/plain")
 	Response, err := http.DefaultClient.Do(Request)
-	if Response.StatusCode != 200 {
+	if Response == nil || Response.StatusCode != 200 {
 		return false, errors.New("Error connecting to Indy server")
 	}
 	defer Response.Body.Close()
