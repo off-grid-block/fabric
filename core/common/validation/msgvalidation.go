@@ -18,7 +18,9 @@ package validation
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -134,18 +136,38 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 		//	return nil, nil, nil, errors.Errorf("error verifying signature by Indy: %v", err)
 		//}
 
-		admin := controller.AdminController{}
+		admin := controller.NewAdminController()
 		_, err = admin.GetConnection()
 		if err != nil {
 			fmt.Println("Failed to get connection in ValidateProposalMessage")
 			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 
-		status, err := admin.VerifySignature(e.Payload, e.Signature, shdr.Did)
+		// hash proposal before sending to admin agent
+		proposalHash := sha256.Sum256(signedProp.ProposalBytes)
+		status, err := admin.VerifySignature(proposalHash, signedProp.Signature, shdr.Did)
 		if status == false || err != nil {
 			fmt.Println("Failed to get verify signature in ValidateProposalMessage")
 			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
+
+		presExID, err := admin.RequireProof()
+		if err != nil {
+			fmt.Println("Failed to send proof request in Validate Transaction")
+			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+
+		time.Sleep(5 * time.Second)
+
+		verified, err := admin.CheckProofStatus(presExID)
+		if err != nil {
+			fmt.Println("Failed to check proof status in Validate Transaction")
+			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		} else if verified == false {
+			fmt.Println("Proof failed verification test in Validate Transaction")
+			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+
 		// Verify that the transaction ID has been computed properly.
 		// This check is needed to ensure that the lookup into the ledger
 		// for the same TxID catches duplicates.
@@ -405,7 +427,6 @@ func validateEndorserTransaction(data []byte, hdr *common.Header) error {
 	return nil
 }
 
-/******* JUST THE SIGNATURE *******/
 // ValidateTransaction checks that the transaction envelope is properly formed
 func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabilities) (*common.Payload, pb.TxValidationCode) {
 	putilsLogger.Debugf("ValidateTransactionEnvelope starts for envelope %p", e)
@@ -455,11 +476,14 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 
-		status, err := admin.VerifySignature(e.Payload, e.Signature, shdr.Did)
+		// hash proposal before sending
+		proposalHash := sha256.Sum256(e.Payload)
+		status, err := admin.VerifySignature(proposalHash, e.Signature, shdr.Did)
 		if status == false || err != nil {
 			fmt.Println("Failed to get verify signature in ValidateTransaction")
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
+
 	}
 
 	// TODO: ensure that creator can transact with us (some ACLs?) which set of APIs is supposed to give us this info?
