@@ -18,17 +18,19 @@ package validation
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/hyperledger/fabric/common/indyverify"
+	//"github.com/hyperledger/fabric/common/indyverify"
 	mspmgmt "github.com/hyperledger/fabric/msp/mgmt"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
+	"github.com/off-grid-block/controller"
 )
 
 var putilsLogger = flogging.MustGetLogger("protoutils")
@@ -126,10 +128,23 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, err
 		}
 	} else {
-		//for Indy user
-		status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
+		////for Indy user
+		//status, err := indyverify.Indyverify(signedProp.ProposalBytes, shdr.Did, signedProp.Signature)
+		//if status == false || err != nil {
+		//	return nil, nil, nil, errors.Errorf("error verifying signature by Indy: %v", err)
+		//}
+
+		admin := controller.AdminController{}
+		_, err = admin.GetConnection()
+		if err != nil {
+			fmt.Println("Failed to get connection in ValidateProposalMessage")
+			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+
+		status, err := admin.VerifySignature(e.Payload, e.Signature, shdr.Did)
 		if status == false || err != nil {
-			return nil, nil, nil, errors.Errorf("error verifying signature by Indy: %v", err)
+			fmt.Println("Failed to get verify signature in ValidateProposalMessage")
+			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 		// Verify that the transaction ID has been computed properly.
 		// This check is needed to ensure that the lookup into the ledger
@@ -390,6 +405,7 @@ func validateEndorserTransaction(data []byte, hdr *common.Header) error {
 	return nil
 }
 
+/******* JUST THE SIGNATURE *******/
 // ValidateTransaction checks that the transaction envelope is properly formed
 func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabilities) (*common.Payload, pb.TxValidationCode) {
 	putilsLogger.Debugf("ValidateTransactionEnvelope starts for envelope %p", e)
@@ -426,9 +442,22 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		}
 
 	} else {
-		//for indy user
-		status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		////for indy user
+		//status, err := indyverify.Indyverify(e.Payload, shdr.Did, e.Signature)
+		//if status == false || err != nil {
+		//	return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		//}
+
+		admin := controller.AdminController{}
+		_, err = admin.GetConnection()
+		if err != nil {
+			fmt.Println("Failed to get connection in ValidateTransaction")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+
+		status, err := admin.VerifySignature(e.Payload, e.Signature, shdr.Did)
 		if status == false || err != nil {
+			fmt.Println("Failed to get verify signature in ValidateTransaction")
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 	}
