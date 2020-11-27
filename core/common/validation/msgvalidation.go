@@ -25,14 +25,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/flogging"
-	//"github.com/hyperledger/fabric/common/indyverify"
+	"github.com/hyperledger/fabric/common/controller"
 	mspmgmt "github.com/hyperledger/fabric/msp/mgmt"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
-	"github.com/off-grid-block/controller"
 )
 
 var putilsLogger = flogging.MustGetLogger("protoutils")
@@ -136,25 +135,25 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 		//	return nil, nil, nil, errors.Errorf("error verifying signature by Indy: %v", err)
 		//}
 
-		admin := controller.NewAdminController()
+		admin, _ := controller.NewAdminController()
 		_, err = admin.GetConnection()
 		if err != nil {
 			fmt.Println("Failed to get connection in ValidateProposalMessage")
-			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+			return nil, nil, nil, err
 		}
 
 		// hash proposal before sending to admin agent
 		proposalHash := sha256.Sum256(signedProp.ProposalBytes)
-		status, err := admin.VerifySignature(proposalHash, signedProp.Signature, shdr.Did)
+		status, err := admin.VerifySignature(proposalHash[:], signedProp.Signature, shdr.Did)
 		if status == false || err != nil {
 			fmt.Println("Failed to get verify signature in ValidateProposalMessage")
-			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+			return nil, nil, nil, err
 		}
 
 		presExID, err := admin.RequireProof()
 		if err != nil {
 			fmt.Println("Failed to send proof request in Validate Transaction")
-			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+			return nil, nil, nil, err
 		}
 
 		time.Sleep(5 * time.Second)
@@ -162,10 +161,10 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 		verified, err := admin.CheckProofStatus(presExID)
 		if err != nil {
 			fmt.Println("Failed to check proof status in Validate Transaction")
-			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+			return nil, nil, nil, err
 		} else if verified == false {
 			fmt.Println("Proof failed verification test in Validate Transaction")
-			return nil, nil, nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+			return nil, nil, nil, err
 		}
 
 		// Verify that the transaction ID has been computed properly.
@@ -469,20 +468,20 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		//	return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		//}
 
-		admin := controller.AdminController{}
-		_, err = admin.GetConnection()
-		if err != nil {
-			fmt.Println("Failed to get connection in ValidateTransaction")
-			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
-		}
-
-		// hash proposal before sending
-		proposalHash := sha256.Sum256(e.Payload)
-		status, err := admin.VerifySignature(proposalHash, e.Signature, shdr.Did)
-		if status == false || err != nil {
-			fmt.Println("Failed to get verify signature in ValidateTransaction")
-			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
-		}
+		//admin := controller.AdminController{}
+		//_, err = admin.GetConnection()
+		//if err != nil {
+		//	fmt.Println("Failed to get connection in ValidateTransaction")
+		//	return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		//}
+		//
+		//// hash proposal before sending
+		//proposalHash := sha256.Sum256(e.Payload)
+		//status, err := admin.VerifySignature(proposalHash, e.Signature, shdr.Did)
+		//if status == false || err != nil {
+		//	fmt.Println("Failed to get verify signature in ValidateTransaction")
+		//	return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		//}
 
 	}
 
