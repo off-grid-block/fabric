@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package msgprocessor
 
 import (
+	"crypto/sha256"
 	"fmt"
 
-	"github.com/hyperledger/fabric/common/indyverify"
+	"github.com/hyperledger/fabric/common/controller"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -92,10 +93,26 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 
 	// Condition added to verify Indy signed transactions by Indy verifier.
 	if shdr.Did != nil {
-		status, err := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
-		if status == false || err != nil {
-			return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
+		//status, err := indyverify.Indyverify(message.Payload, shdr.Did, message.Signature)
+		//if status == false || err != nil {
+		//	return fmt.Errorf("Verification of signature by Indy failed , err %s", err)
+		//}
+
+		admin, _ := controller.NewAdminController()
+		_, err = admin.GetConnection()
+		if err != nil {
+			fmt.Println("Failed to get connection in ValidateProposalMessage")
+			return err
 		}
+
+		// hash proposal before sending to admin agent
+		proposalHash := sha256.Sum256(message.Payload)
+		status, err := admin.VerifySignature(proposalHash[:], shdr.Did, message.Signature)
+		if status == false || err != nil {
+			fmt.Println("Failed to get verify signature in ValidateProposalMessage")
+			return err
+		}
+
 	} else {
 		err = policy.Evaluate(signedData)
 		if err != nil {
