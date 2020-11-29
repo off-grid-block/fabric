@@ -16,7 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/crypto"
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/hyperledger/fabric/common/indyverify"
+	// "github.com/hyperledger/fabric/common/indyverify"
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
 	"github.com/hyperledger/fabric/common/policies"
 	"github.com/hyperledger/fabric/common/util"
@@ -265,11 +265,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			return cb.Status_FORBIDDEN, nil
 		}
 	} else {
-		//Indy verification
-		status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
-		if status == false || err != nil {
-			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy, %v", err)
-		}
+		// //Indy verification
+		// status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+		// if status == false || err != nil {
+		// 	return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy, %v", err)
+		// }
 	}
 
 	if seekInfo.Start == nil || seekInfo.Stop == nil {
@@ -346,11 +346,11 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 				return cb.Status_FORBIDDEN, nil
 			}
 		} else {
-			//Indy verify
-			status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
-			if status == false || err != nil {
-				return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy: %v", err)
-			}
+			// //Indy verify
+			// status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
+			// if status == false || err != nil {
+			// 	return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature by Indy: %v", err)
+			// }
 		}
 
 		logger.Debugf("[channel: %s] Delivering block [%d] for (%p) for %s", chdr.ChannelId, block.Header.Number, seekInfo, addr)

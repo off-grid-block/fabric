@@ -107,7 +107,7 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 
 		// hash proposal before sending to admin agent
 		proposalHash := sha256.Sum256(message.Payload)
-		status, err := admin.VerifySignature(proposalHash[:], shdr.Did, message.Signature)
+		status, err := admin.VerifySignature(proposalHash[:], message.Signature, shdr.Did)
 		if status == false || err != nil {
 			fmt.Println("Failed to get verify signature in ValidateProposalMessage")
 			return err
