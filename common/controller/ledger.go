@@ -10,23 +10,15 @@ import (
 
 const (
 	ledgerUrl = "http://host.docker.internal:9000"
-	//ledgerUrl = "http://localhost:9000"
+	// ledgerUrl = "http://localhost:9000"
 )
-
-type IndyProofRequest struct {
-	Name string `json:"name"`
-	Version string `json:"version"`
-	Nonce string `json:"nonce"`
-	ReqAttr map[string]map[string]interface{} `json:"requested_attributes"`
-	ReqPred map[string]map[string]interface{} `json:"requested_predicates"`
-}
 
 // Controller types implement basic connectivity
 // to ACA-Py agents.
 type Controller interface {
 	Alias() string
 	AgentUrl() string
-	PublicDid() string
+	PublicDid() (string, error)
 	SetPublicDid(string)
 	ConnectionDid() string
 }
@@ -53,8 +45,10 @@ type RegisterDidResponse struct {
 // Register agent with ledger and receive a DID
 func RegisterDidWithLedger(controller Controller, seed string) (string, error) {
 
-	if controller.PublicDid() != "" {
-		return "", fmt.Errorf("Agent already registered public DID on ledger")
+	if did, err := controller.PublicDid(); did != "" {
+		return "", fmt.Errorf("agent already registered public DID on ledger: %v\n", err)
+	} else if err != nil {
+		return "", fmt.Errorf("failed while checking if public DID exists: %v\n", err)
 	}
 
 	reqBody := RegisterDidRequest{

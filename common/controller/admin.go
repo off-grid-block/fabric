@@ -9,7 +9,7 @@ import (
 
 const (
 	adminUrl = "http://host.docker.internal:8021"
-	//adminUrl = "http://localhost:8021"
+	// adminUrl = "http://localhost:8021"
 )
 
 type AdminController struct {
@@ -36,8 +36,38 @@ func (ac *AdminController) AgentUrl() string {
 	return ac.agentUrl
 }
 
-func (ac *AdminController) PublicDid() string {
-	return ac.did
+func (ac *AdminController) PublicDid() (string, error) {
+
+	if len(ac.did) == 0 {
+		resp, err := SendRequest_GET(ac.agentUrl, "/wallet/did/public", nil)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+
+		type PublicDidResponse struct {
+			Result struct {
+				Did    string `json:"did"`
+				Verkey string `json:"verkey"`
+			} `json:"result"`
+
+		}
+
+		var publicDidResp PublicDidResponse
+		err = json.NewDecoder(resp.Body).Decode(&publicDidResp)
+		if err != nil {
+			return "", err
+		}
+
+		// if no public did yet, return blank string (but no error)
+		if len(publicDidResp.Result.Did) == 0 {
+			return "", nil
+		}
+		// set public did
+		ac.did = publicDidResp.Result.Did
+	}
+
+	return ac.did, nil
 }
 
 func (ac *AdminController) SetPublicDid(did string) {
@@ -252,6 +282,14 @@ type RequireProofRequest struct {
 	ProofRequest IndyProofRequest `json:"proof_request"`
 }
 
+type IndyProofRequest struct {
+	Name string `json:"name"`
+	Version string `json:"version"`
+	//Nonce string `json:"nonce"`
+	ReqAttr map[string]map[string]interface{} `json:"requested_attributes"`
+	ReqPred map[string]map[string]interface{} `json:"requested_predicates"`
+}
+
 type RequireProofResponse struct {
 	PresExID string `json:"presentation_exchange_id"`
 }
@@ -259,13 +297,21 @@ type RequireProofResponse struct {
 // Request a proof from the client who submitted the transaction
 func (ac *AdminController) RequireProof() (string, error) {
 
+	//nonce, _ := uuid.NewRandom()
+
+	publicDid, err := ac.PublicDid()
+	if err != nil {
+		return "", fmt.Errorf("Failed to get public did: %v\n", err)
+	}
+
 	indyProofReq := IndyProofRequest{
 		Name:    "simple_proof",
 		Version: "1.0",
+		//Nonce:   nonce.String(),
 		ReqAttr: map[string]map[string]interface{}{
 			"0_app_name_uuid": {
 				"name": "app_name",
-				"restrictions": []map[string]string{{"issuer_did": ac.PublicDid()}},
+				"restrictions": []map[string]string{{"issuer_did": publicDid}},
 			},
 		},
 		//ReqPred: map[string]map[string]interface{}{},
@@ -274,7 +320,7 @@ func (ac *AdminController) RequireProof() (string, error) {
 				"name": "app_id",
 				"p_type": ">=",
 				"p_value": 30,
-				"restrictions": []map[string]string{{"issuer_did": ac.PublicDid()}},
+				"restrictions": []map[string]string{{"issuer_did": publicDid}},
 			},
 		},
 	}

@@ -9,7 +9,7 @@ import (
 
 const (
 	clientUrl = "http://host.docker.internal:8031"
-	//clientUrl = "http://localhost:8031"
+	// clientUrl = "http://localhost:8031"
 )
 
 type ClientController struct {
@@ -36,8 +36,8 @@ func (cc *ClientController) AgentUrl() string {
 	return cc.agentUrl
 }
 
-func (cc *ClientController) PublicDid() string {
-	return cc.did
+func (cc *ClientController) PublicDid() (string, error) {
+	return cc.did, nil
 }
 
 func (cc *ClientController) SetPublicDid(did string) {

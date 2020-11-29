@@ -6,38 +6,49 @@ import (
 	"time"
 )
 
-//func TestAdminController_RegisterPublicDid(t *testing.T) {
-//
-//	var seed = Seed()
-//
-//	// Create a client controller for signing
-//	cc := NewClientController()
-//
-//	// Create an admin controller for verifying the signature
-//	ac := NewAdminController()
-//
-//	// Register DID of client
-//	t.Run("Register Did With Ledger", func(t *testing.T) {
-//
-//		did, err := RegisterDidWithLedger(ac, seed)
-//		if err != nil {
-//			t.Errorf("Error occurred while registering did: %v\n", err)
-//			return
-//		}
-//		ac.SetPublicDid(did)
-//
-//		did, err = RegisterDidWithLedger(cc, seed)
-//		if err != nil {
-//			t.Errorf("Error occurred while registering did: %v\n", err)
-//			return
-//		}
-//		cc.SetPublicDid(did)
-//
-//		t.Logf("admin Public DID:  %v\n", ac.PublicDid())
-//		t.Logf("client Public DID: %v\n", cc.PublicDid())
-//	})
-//}
+func TestAdminController_RegisterPublicDid(t *testing.T) {
 
+	var seed = Seed()
+
+	// Create an admin controller for verifying the signature
+	ac, err := NewAdminController()
+	if err != nil {
+		t.Errorf("Error initializing controller: %v\n", err)
+	}
+
+	// Register DID of client
+	t.Run("Register Did With Ledger", func(t *testing.T) {
+
+		did, err := RegisterDidWithLedger(ac, seed)
+		if err != nil {
+			t.Errorf("Error occurred while registering did: %v\n", err)
+			return
+		}
+
+		did, err = ac.PublicDid()
+		if err != nil {
+			t.Errorf("Error occurred while getting did: %v\n", err)
+		}
+
+		t.Logf("admin Public DID:  %v\n", did)
+	})
+}
+
+func TestAdminController_RequestPublicDid(t *testing.T) {
+
+	// Create an admin controller for verifying the signature
+	ac, err := NewAdminController()
+	if err != nil {
+		t.Errorf("Error initializing controller: %v\n", err)
+	}
+
+	did, err := ac.PublicDid()
+	if err != nil {
+		t.Errorf("Error requesting public did: %v\n", err)
+	}
+
+	t.Logf("Public DID: %v\n", did)
+}
 
 func TestAdminController_IssueCredential(t *testing.T) {
 
@@ -148,8 +159,18 @@ func TestAdminController_VerifySignature(t *testing.T) {
 			return
 		}
 
-		t.Logf("admin Public DID:  %v\n", ac.PublicDid())
-		t.Logf("client Public DID: %v\n", cc.PublicDid())
+		adid, err := ac.PublicDid()
+		if err != nil {
+			t.Errorf("Error occurred while getting did: %v\n", err)
+		}
+
+		cdid, err := ac.PublicDid()
+		if err != nil {
+			t.Errorf("Error occurred while getting did: %v\n", err)
+		}
+
+		t.Logf("admin Public DID:  %v\n", adid)
+		t.Logf("client Public DID: %v\n", cdid)
 	})
 
 	// Register DID of client
@@ -233,11 +254,6 @@ func TestAdminController_VerifySignature(t *testing.T) {
 	// Verify signature
 	t.Run("Verify Signature", func(t *testing.T) {
 
-		t.Logf("Message: %v\n", message)
-		t.Logf("Signature: %v\n", signature)
-		t.Logf("Signing DID: %v\n", cc.SigningDid)
-		t.Logf("Signing VK: %v\n", cc.SigningVk)
-
 		messageHash := sha256.Sum256([]byte(message))
 
 		verified, err := ac.VerifySignature(messageHash[:], []byte(signature), []byte(cc.SigningDid))
@@ -310,7 +326,13 @@ func TestAdminController_RequireProof(t *testing.T) {
 			t.Errorf("Error occurred while registering did: %v\n", err)
 			return
 		}
-		t.Logf("Public DID : %v\n", ac.PublicDid())
+
+		did, err := ac.PublicDid()
+		if err != nil {
+			t.Errorf("Error occurred while getting did: %v\n", err)
+		}
+
+		t.Logf("Public DID : %v\n", did)
 	})
 
 	t.Run("Register Schema and Cred Def", func(t *testing.T) {
