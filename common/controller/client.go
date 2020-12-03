@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	clientUrl = "http://host.docker.internal:8031"
+	clientUrl = "http://client.example.com:8031"
 	// clientUrl = "http://localhost:8031"
 )
 

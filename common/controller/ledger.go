@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ledgerUrl = "http://host.docker.internal:9000"
+	ledgerUrl = "http://von.example.com:9000"
 	// ledgerUrl = "http://localhost:9000"
 )
 
