@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/channelconfig"
@@ -155,8 +154,6 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			fmt.Println("Failed to send proof request in Validate Transaction")
 			return nil, nil, nil, err
 		}
-
-		time.Sleep(5 * time.Second)
 
 		verified, err := admin.CheckProofStatus(presExID)
 		if err != nil {
@@ -467,6 +464,21 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 		//if status == false || err != nil {
 		//	return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		//}
+
+		admin, _ := controller.NewAdminController()
+		_, err = admin.GetConnection()
+		if err != nil {
+			fmt.Println("Failed to get connection in ValidateProposalMessage")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
+
+		// hash proposal before sending to admin agent
+		proposalHash := sha256.Sum256(e.Payload)
+		status, err := admin.VerifySignature(proposalHash[:], e.Signature, shdr.Did)
+		if status == false || err != nil {
+			fmt.Println("Failed to verify signature in ValidateProposalMessage")
+			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
+		}
 
 		//admin := controller.AdminController{}
 		//_, err = admin.GetConnection()

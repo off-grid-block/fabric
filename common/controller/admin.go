@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 const (
@@ -347,22 +348,36 @@ func (ac *AdminController) RequireProof() (string, error) {
 
 type ProofStatusResponse struct {
 	Verified string `json:"verified"`
+	State string `json:"state"`
 }
 
+// Check the status of the proof request.
+// Returns "true" if the proof was correct;
+// returns "false" otherwise.
 func (ac *AdminController) CheckProofStatus(presExID string) (bool, error) {
 
-	resp, err := SendRequest_GET(ac.AgentUrl(), "/present-proof/records/" + presExID, nil)
-	if err != nil {
-		return false, fmt.Errorf("Failed to request proof status: %v\n", err)
-	}
-	defer resp.Body.Close()
+	var state string
+	var status string
 
-	var proofStatus ProofStatusResponse
-	err = json.NewDecoder(resp.Body).Decode(&proofStatus)
-	if err != nil {
-		return false, fmt.Errorf("Failed to decode proof status response: %v\n", err)
+	for state != "verified" {
+
+		fmt.Println("sending proof status request...")
+		time.Sleep(1 * time.Second)
+
+		resp, err := SendRequest_GET(ac.AgentUrl(), "/present-proof/records/" + presExID, nil)
+		if err != nil {
+			return false, fmt.Errorf("Failed to request proof status: %v\n", err)
+		}
+
+		var proofStatus ProofStatusResponse
+		err = json.NewDecoder(resp.Body).Decode(&proofStatus)
+		if err != nil {
+			return false, fmt.Errorf("Failed to decode proof status response: %v\n", err)
+		}
+		status = proofStatus.Verified
+		state = proofStatus.State
+		resp.Body.Close()
 	}
 
-	return proofStatus.Verified == "true", nil
+	return status == "true", nil
 }
-
