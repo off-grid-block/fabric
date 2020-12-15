@@ -5,7 +5,7 @@ These changes are up to date with commit [1453a06cb6bf888727fe0c1b7973d98476277c
     - provide a set of functions enabling communication with DEON ACA-Py agent instances.
     - see more details at [the DEON Github repository](https://github.com/off-grid-block/controller).
 
-- ```core/common/msgvalidation```
+- ```core/common/validation/msgvalidation```
     - changes inside ```ValidateProposalMessage()``` and ```ValidateTransaction()```
     - replace ```indyverify.Indyverify()``` calls with calls to ```VerifySignature()``` from ```common/controller```.
     - create admin agent controller with ```NewAdminController()```
