@@ -8,6 +8,8 @@ package deliver
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -265,6 +267,26 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			return cb.Status_FORBIDDEN, nil
 		}
 	} else {
+
+		admin, _ := controller.NewAdminController()
+		_, err = admin.GetConnection()
+		if err != nil {
+			//fmt.Println("Failed to get connection in ValidateProposalMessage")
+			logger.Warningf("Failed to get connection in ValidateProposalMessage: %v", err)
+			return cb.Status_BAD_REQUEST, nil
+		}
+
+		// hash proposal before sending to admin agent
+		proposalHash := sha256.Sum256(envelope.Payload)
+		status, err := admin.VerifySignature(proposalHash[:], envelope.Signature, shdr.Did)
+		if status == false || err != nil {
+			//fmt.Println("Failed to verify signature in ValidateProposalMessage")
+			logger.Warningf("Failed to verify signature in ValidateProposalMessage: %v", err)
+			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature: %v", err)
+		}
+
+		logger.Debugf("admin agent verified signature with status: %s", status)
+
 		// //Indy verification
 		// status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
 		// if status == false || err != nil {
