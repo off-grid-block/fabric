@@ -361,7 +361,6 @@ func (ac *AdminController) CheckProofStatus(presExID string) (bool, error) {
 
 	for state != "verified" {
 
-		fmt.Println("sending proof status request...")
 		time.Sleep(1 * time.Second)
 
 		resp, err := SendRequest_GET(ac.AgentUrl(), "/present-proof/records/" + presExID, nil)
