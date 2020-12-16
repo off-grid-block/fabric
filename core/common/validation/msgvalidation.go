@@ -149,7 +149,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, err
 		}
 
-		putilsLogger.Debugf("Verify signature to admin agent complete inside ValidateProposalMessage with status: %s", status)
+		fmt.Printf("Verify signature to admin agent complete inside ValidateProposalMessage with status: %s", status)
 
 		presExID, err := admin.RequireProof()
 		if err != nil {
@@ -157,7 +157,7 @@ func ValidateProposalMessage(signedProp *pb.SignedProposal) (*pb.Proposal, *comm
 			return nil, nil, nil, err
 		}
 
-		putilsLogger.Debugf("Request proof to admin agent complete inside ValidateProposalMessage with status: %s", status)
+		fmt.Printf("Request proof to admin agent complete inside ValidateProposalMessage with status: %s", status)
 
 		verified, err := admin.CheckProofStatus(presExID)
 		if err != nil {
@@ -484,7 +484,7 @@ func ValidateTransaction(e *common.Envelope, c channelconfig.ApplicationCapabili
 			return nil, pb.TxValidationCode_BAD_CREATOR_SIGNATURE
 		}
 
-		putilsLogger.Debugf("Verify signature to admin agent complete inside ValidateTransaction with status: %s", status)
+		fmt.Printf("Verify signature to admin agent complete inside ValidateTransaction with status: %s", status)
 
 		//admin := controller.AdminController{}
 		//_, err = admin.GetConnection()

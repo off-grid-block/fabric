@@ -101,7 +101,7 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		admin, _ := controller.NewAdminController()
 		_, err = admin.GetConnection()
 		if err != nil {
-			logger.Debugf("Failed to get connection in ValidateProposalMessage: %v", err)
+			fmt.Printf("Failed to get connection in ValidateProposalMessage: %v", err)
 			return err
 		}
 
@@ -109,11 +109,11 @@ func (sf *SigFilter) Apply(message *cb.Envelope) error {
 		proposalHash := sha256.Sum256(message.Payload)
 		status, err := admin.VerifySignature(proposalHash[:], message.Signature, shdr.Did)
 		if status == false || err != nil {
-			logger.Debugf("Failed to get verify signature in ValidateProposalMessage: %v", err)
+			fmt.Printf("Failed to get verify signature in ValidateProposalMessage: %v", err)
 			return err
 		}
 
-		logger.Debugf("verify signature admin agent call complete from inside orderer with status: %s", status)
+		fmt.Printf("verify signature admin agent call complete from inside orderer with status: %s", status)
 
 	} else {
 		err = policy.Evaluate(signedData)

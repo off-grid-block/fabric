@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger/fabric/common/flogging"
 	// "github.com/hyperledger/fabric/common/indyverify"
 	"github.com/hyperledger/fabric/common/ledger/blockledger"
+	"github.com/hyperledger/fabric/common/controller"
 	"github.com/hyperledger/fabric/common/policies"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/comm"
@@ -285,7 +286,7 @@ func (h *Handler) deliverBlocks(ctx context.Context, srv *Server, envelope *cb.E
 			return cb.Status_FORBIDDEN, errors.Errorf("error verifying signature: %v", err)
 		}
 
-		logger.Debugf("admin agent verified signature with status: %s", status)
+		fmt.Printf("admin agent verified signature with status: %s", status)
 
 		// //Indy verification
 		// status, err := indyverify.Indyverify(envelope.Payload, shdr.Did, envelope.Signature)
